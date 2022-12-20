@@ -34,20 +34,19 @@ pygame.display.update()
 
 clock = pygame.time.Clock()
 
-global food_position
-
 food_position = [np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20]
 
 def capture_food():
+    global food_position
     if snake_body[0][0] == food_position[0] and snake_body[0][1] == food_position[1]:
         if snake_body[len(snake_body) - 1][2] == direction.RIGHT:
-            snake_body.append([snake_body[len(snake_body)-1] - UNIT_SIZE, snake_body[len(snake_body)-1]])
+            snake_body.append([snake_body[len(snake_body)-1][0] - UNIT_SIZE, snake_body[len(snake_body)-1][1], direction.RIGHT])
         elif snake_body[len(snake_body) - 1][2] == direction.LEFT:
-            snake_body.append([snake_body[len(snake_body)-1] + UNIT_SIZE, snake_body[len(snake_body)-1]])
+            snake_body.append([snake_body[len(snake_body)-1][0] + UNIT_SIZE, snake_body[len(snake_body)-1][1], direction.LEFT])
         elif snake_body[len(snake_body) - 1][2] == direction.UP:
-            snake_body.append([snake_body[len(snake_body)-1], snake_body[len(snake_body)-1] + UNIT_SIZE])
+            snake_body.append([snake_body[len(snake_body)-1][0], snake_body[len(snake_body)-1][1] + UNIT_SIZE, direction.UP])
         elif snake_body[len(snake_body) - 1][2] == direction.DOWN:
-            snake_body.append([snake_body[len(snake_body)-1], snake_body[len(snake_body)-1] - UNIT_SIZE])
+            snake_body.append([snake_body[len(snake_body)-1][0], snake_body[len(snake_body)-1][1] - UNIT_SIZE, direction.DOWN])
         food_position = [np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20]
 
 # game loop
@@ -69,6 +68,7 @@ while True:
     capture_food()
     
     for i in range(len(snake_body)):
+        
         if i == 0: snake_body[i][2] = curr_dir
         if snake_body[i][2] == direction.UP:
             pygame.draw.rect(screen, BLACK, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))
@@ -88,7 +88,8 @@ while True:
         if snake_body[i][2] == direction.LEFT:
             pygame.draw.rect(screen, BLACK, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))
             snake_body[i][0] -= UNIT_SIZE 
-            pygame.draw.rect(screen, WHITE, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))
+            pygame.draw.rect(screen, WHITE, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))    
+    pygame.draw.rect(screen, RED, pygame.Rect(food_position[0], food_position[1], UNIT_SIZE, UNIT_SIZE))
     
     pygame.display.update()
     
