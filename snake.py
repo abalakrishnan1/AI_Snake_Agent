@@ -11,6 +11,7 @@ class direction(Enum):
 SCREEN_SIZE = (400, 400)
 UNIT_SIZE = 20
 
+# colors
 BLACK = pygame.Color(0, 0, 0)
 WHITE = pygame.Color(255, 255, 255)
 RED = pygame.Color(255, 0, 0)
