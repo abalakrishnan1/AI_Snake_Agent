@@ -17,13 +17,15 @@ WHITE = pygame.Color(255, 255, 255)
 RED = pygame.Color(255, 0, 0)
 
 
-snake_body = [[200, 200, direction.UP],
-              [200, 220, direction.UP],
-              [200, 240, direction.UP]]
+snake_body :list[list] = [[200, 200, direction.UP],
+                          [200, 200 + UNIT_SIZE, direction.UP],
+                          [200, 200 + 2*UNIT_SIZE, direction.UP]]
 
-curr_dir = direction.UP
+curr_dir :direction = direction.UP
 
 pygame.init()
+
+running = True
 
 screen = pygame.display.set_mode(SCREEN_SIZE)
 
@@ -50,13 +52,25 @@ def capture_food():
         food_position = [np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20]
 
 def check_window_collision():
-    if snake_body[0][0] < 0 or snake_body[0][0] > 400 or snake_body[0][0] < 0 or snake_body[0][1] > 400:
-        pygame.quit()
+    if snake_body[0][0] <= 0 or snake_body[0][0] >= 400 or snake_body[0][0] <= 0 or snake_body[0][1] >= 400:
+        global running
+        running = False
+
+def check_body_collision():
+    for i in range(1, len(snake_body)):
+        if snake_body[i][0] == snake_body[0][0] and snake_body[i][1] == snake_body[0][1]:
+            global running
+            running = False
 
 # game loop
-while True:
+while running:
+    capture_food()
+    check_window_collision()
+    check_body_collision()
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            running = False
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
@@ -68,9 +82,6 @@ while True:
                 curr_dir = direction.DOWN
             elif event.key == pygame.K_LEFT and curr_dir != direction.RIGHT:
                 curr_dir = direction.LEFT
-    
-    capture_food()
-    check_window_collision()
     
     for i in range(len(snake_body)):
         
