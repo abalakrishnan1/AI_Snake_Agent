@@ -49,6 +49,10 @@ def capture_food():
             snake_body.append([snake_body[len(snake_body)-1][0], snake_body[len(snake_body)-1][1] - UNIT_SIZE, direction.DOWN])
         food_position = [np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20]
 
+def check_collision():
+    if snake_body[0][0] < 0 or snake_body[0][0] > 400 or snake_body[0][0] < 0 or snake_body[0][1] > 400:
+        pygame.quit()
+
 # game loop
 while True:
     for event in pygame.event.get():
@@ -66,6 +70,7 @@ while True:
                 curr_dir = direction.LEFT
     
     capture_food()
+    check_collision()
     
     for i in range(len(snake_body)):
         
