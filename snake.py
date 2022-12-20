@@ -3,13 +3,13 @@ from enum import Enum
 
 # constants
 class direction(Enum):
-    UP = 1
-    DOWN = 2
-    LEFT = 3
-    RIGHT = 4   
+    UP :int = 1
+    DOWN :int = 2
+    LEFT :int = 3
+    RIGHT :int = 4   
 
-SCREEN_SIZE = (400, 400)
-UNIT_SIZE = 20
+SCREEN_SIZE :tuple = (400, 400)
+UNIT_SIZE :int = 20
 
 # colors
 BLACK = pygame.Color(0, 0, 0)
@@ -49,7 +49,7 @@ def capture_food():
             snake_body.append([snake_body[len(snake_body)-1][0], snake_body[len(snake_body)-1][1] - UNIT_SIZE, direction.DOWN])
         food_position = [np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20]
 
-def check_collision():
+def check_window_collision():
     if snake_body[0][0] < 0 or snake_body[0][0] > 400 or snake_body[0][0] < 0 or snake_body[0][1] > 400:
         pygame.quit()
 
@@ -60,17 +60,17 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
+            if event.key == pygame.K_UP and curr_dir != direction.DOWN:
                 curr_dir = direction.UP
-            elif event.key == pygame.K_RIGHT:
+            elif event.key == pygame.K_RIGHT and curr_dir != direction.LEFT:
                 curr_dir = direction.RIGHT
-            elif event.key == pygame.K_DOWN:
+            elif event.key == pygame.K_DOWN and curr_dir != direction.UP:
                 curr_dir = direction.DOWN
-            elif event.key == pygame.K_LEFT:
+            elif event.key == pygame.K_LEFT and curr_dir != direction.RIGHT:
                 curr_dir = direction.LEFT
     
     capture_food()
-    check_collision()
+    check_window_collision()
     
     for i in range(len(snake_body)):
         
@@ -100,6 +100,4 @@ while True:
     
     for i in range(len(snake_body)):
         if i != 0: snake_body[len(snake_body) - i][2] = snake_body[len(snake_body) - i - 1][2]
-        if snake_body[i][0] == snake_body[0][0] and snake_body[i][1] == snake_body[0][1]:
-            pygame.quit()
     clock.tick(10)
