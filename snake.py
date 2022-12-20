@@ -24,7 +24,7 @@ pygame.init()
 
 screen = pygame.display.set_mode(SCREEN_SIZE)
 
-
+# init render
 for i in range(len(snake_body)):
     pygame.draw.rect(screen, WHITE, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))
 pygame.display.update()
