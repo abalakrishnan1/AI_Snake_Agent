@@ -1,6 +1,7 @@
 import pygame, sys, numpy as np
 from enum import Enum
 
+# constants
 class direction(Enum):
     UP = 1
     DOWN = 2
@@ -13,6 +14,7 @@ UNIT_SIZE = 20
 BLACK = pygame.Color(0, 0, 0)
 WHITE = pygame.Color(255, 255, 255)
 RED = pygame.Color(255, 0, 0)
+
 
 snake_body = [[200, 200, direction.UP],
               [200, 220, direction.UP],
