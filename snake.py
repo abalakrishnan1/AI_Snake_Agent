@@ -100,4 +100,6 @@ while True:
     
     for i in range(len(snake_body)):
         if i != 0: snake_body[len(snake_body) - i][2] = snake_body[len(snake_body) - i - 1][2]
+        if snake_body[i][0] == snake_body[0][0] and snake_body[i][1] == snake_body[0][1]:
+            pygame.quit()
     clock.tick(10)
