@@ -1,0 +1,2 @@
+
+    clock.tick(60)
