@@ -1,4 +1,10 @@
-import pygame, sys, numpy as np
+import pygame
+import sys
+import numpy as np
+import tensorflow as tf
+# import tf_agents.networks.q_network as q_network
+# from tf_agents.agents.dqn import dqn_agent
+
 from enum import Enum
 
 # constants
@@ -10,33 +16,36 @@ class direction(Enum):
 
 SCREEN_SIZE :tuple = (400, 400)
 UNIT_SIZE :int = 20
+STARTING_POINT :int = 200
 
 # colors
 BLACK = pygame.Color(0, 0, 0)
 WHITE = pygame.Color(255, 255, 255)
 RED = pygame.Color(255, 0, 0)
 
-
-snake_body :list[list] = [[200, 200, direction.UP],
-                          [200, 200 + UNIT_SIZE, direction.UP],
-                          [200, 200 + 2*UNIT_SIZE, direction.UP]]
+snake_body :list[list] = [[STARTING_POINT, STARTING_POINT, direction.UP],
+                          [STARTING_POINT, STARTING_POINT + UNIT_SIZE, direction.UP],
+                          [STARTING_POINT, STARTING_POINT + 2*UNIT_SIZE, direction.UP]]
 
 curr_dir :direction = direction.UP
 
 pygame.init()
 
-running = True
+running :bool = True
 
-screen = pygame.display.set_mode(SCREEN_SIZE)
+screen :pygame.Surface = pygame.display.set_mode(SCREEN_SIZE)
+
+# network config
+
 
 # init render
 for i in range(len(snake_body)):
     pygame.draw.rect(screen, WHITE, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))
 pygame.display.update()
 
-clock = pygame.time.Clock()
+clock :pygame.time.Clock = pygame.time.Clock()
 
-food_position = [np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20]
+food_position :np.array = np.array([np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20])
 
 def capture_food():
     global food_position
@@ -49,8 +58,9 @@ def capture_food():
             snake_body.append([snake_body[len(snake_body)-1][0], snake_body[len(snake_body)-1][1] + UNIT_SIZE, direction.UP])
         elif snake_body[len(snake_body) - 1][2] == direction.DOWN:
             snake_body.append([snake_body[len(snake_body)-1][0], snake_body[len(snake_body)-1][1] - UNIT_SIZE, direction.DOWN])
-        food_position = [np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20]
+        food_position = np.array([np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20])
 
+# if snake is out of bounds
 def check_window_collision():
     if snake_body[0][0] <= 0 or snake_body[0][0] >= 400 or snake_body[0][0] <= 0 or snake_body[0][1] >= 400:
         global running
