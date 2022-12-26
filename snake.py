@@ -30,13 +30,11 @@ snake_body :list[list] = [[STARTING_POINT, STARTING_POINT, direction.UP],
 curr_dir :direction = direction.UP
 
 pygame.init()
+my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
 running :bool = True
 
 screen :pygame.Surface = pygame.display.set_mode(SCREEN_SIZE)
-
-# network config
-
 
 # init render
 for i in range(len(snake_body)):
@@ -116,7 +114,8 @@ while running:
             snake_body[i][0] -= UNIT_SIZE 
             pygame.draw.rect(screen, WHITE, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))    
     pygame.draw.rect(screen, RED, pygame.Rect(food_position[0], food_position[1], UNIT_SIZE, UNIT_SIZE))
-    
+    text_surface = my_font.render(f'Score: {len(snake_body) - 3}', False, (0, 0, 0))
+    screen.blit(text_surface, (0,0))
     pygame.display.update()
     
     for i in range(len(snake_body)):
