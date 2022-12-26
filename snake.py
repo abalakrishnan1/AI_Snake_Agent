@@ -60,7 +60,7 @@ def capture_food():
 
 # if snake is out of bounds
 def check_window_collision():
-    if snake_body[0][0] <= 0 or snake_body[0][0] >= 400 or snake_body[0][0] <= 0 or snake_body[0][1] >= 400:
+    if snake_body[0][0] < 0 or snake_body[0][0] >= 400 or snake_body[0][0] < 0 or snake_body[0][1] >= 400:
         global running
         running = False
 
@@ -114,8 +114,7 @@ while running:
             snake_body[i][0] -= UNIT_SIZE 
             pygame.draw.rect(screen, WHITE, pygame.Rect(snake_body[i][0], snake_body[i][1], UNIT_SIZE, UNIT_SIZE))    
     pygame.draw.rect(screen, RED, pygame.Rect(food_position[0], food_position[1], UNIT_SIZE, UNIT_SIZE))
-    text_surface = my_font.render(f'Score: {len(snake_body) - 3}', False, (0, 0, 0))
-    screen.blit(text_surface, (0,0))
+    
     pygame.display.update()
     
     for i in range(len(snake_body)):
