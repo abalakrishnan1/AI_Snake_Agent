@@ -89,21 +89,26 @@ while running:
     check_window_collision()
     check_body_collision()
     
+    already_changed_dir = False
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
             sys.exit()
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN and not already_changed_dir:
             if event.key == pygame.K_UP and curr_dir != direction.DOWN:
                 curr_dir = direction.UP
+                already_changed_dir = True
             elif event.key == pygame.K_RIGHT and curr_dir != direction.LEFT:
                 curr_dir = direction.RIGHT
+                already_changed_dir = True
             elif event.key == pygame.K_DOWN and curr_dir != direction.UP:
                 curr_dir = direction.DOWN
+                already_changed_dir = True
             elif event.key == pygame.K_LEFT and curr_dir != direction.RIGHT:
                 curr_dir = direction.LEFT
-    
+                already_changed_dir = True 
     for i in range(len(snake_body)):
         
         if i == 0: snake_body[i].direction = curr_dir
