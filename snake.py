@@ -1,7 +1,6 @@
 import pygame
 import sys
 import numpy as np
-
 from enum import Enum
 
 # constants
@@ -20,7 +19,7 @@ class SnakeBody:
         
         
 SCREEN_SIZE :tuple = (400, 425)
-UNIT_SIZE :int = 20
+UNIT_SIZE :int = 10
 STARTING_POINT :int = 200
 
 # colors
@@ -140,4 +139,4 @@ while running:
     
     for i in range(len(snake_body)):
         if i != 0: snake_body[len(snake_body) - i].direction = snake_body[len(snake_body) - i - 1].direction
-    clock.tick(20)
+    clock.tick(15)
