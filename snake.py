@@ -26,8 +26,8 @@ class SnakeBody:
         self.direction = direction
         
         
-SCREEN_SIZE :tuple = (400, 425)
-UNIT_SIZE :int = 10
+SCREEN_SIZE :tuple = (400, 435)
+UNIT_SIZE :int = 20
 STARTING_POINT :int = 200
 
 # colors
@@ -48,13 +48,15 @@ memory = deque(maxlen=100000)
 done = False
 n_game = 0
 reward = 0
+max_score = 0
+msg = ""
 
 curr_dir :direction = direction.UP
 
 #pygame init
 pygame.init()
 myfont = pygame.font.SysFont("monospace", 16)
-score_rect = pygame.Rect(0, 400, 400, 25)
+score_rect = pygame.Rect(0, 400, 400, 35)
 
 running :bool = True
 
@@ -74,9 +76,10 @@ clock :pygame.time.Clock = pygame.time.Clock()
 food_position :np.array = np.array([np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20])
          
 def reset():
-    global done, reward, snake_body, food_position
+    global done, reward, snake_body, food_position, msg, curr_dir
     reward = False
     done = False
+    curr_dir = direction.UP
     food_position = np.array([np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20])
     snake_body = [SnakeBody(*[STARTING_POINT, STARTING_POINT, direction.UP]),
                           SnakeBody(*[STARTING_POINT, STARTING_POINT + UNIT_SIZE, direction.UP]),
@@ -95,13 +98,12 @@ def check_body_will_collide(head_future):
         if head_future.x == snake_body[i].x and head_future.y == snake_body[i].y:
             return True
     return False
-         
 
 def check_will_collide(dir, danger_dir):
     head = snake_body[0]
     if danger_dir == direction.UP: # straight
         if dir == direction.UP:
-            if head.y - UNIT_SIZE < 0 or check_body_will_collide(SnakeBody(head.x, head.y - UNIT_SIZE, curr_dir)):
+            if head.y - UNIT_SIZE <= 0 or check_body_will_collide(SnakeBody(head.x, head.y - UNIT_SIZE, curr_dir)):
                 return True
         if dir == direction.DOWN:
             if head.y + UNIT_SIZE >= 400 or check_body_will_collide(SnakeBody(head.x, head.y + UNIT_SIZE, curr_dir)):
@@ -118,13 +120,13 @@ def check_will_collide(dir, danger_dir):
             if head.x - UNIT_SIZE < 0 or check_body_will_collide(SnakeBody(head.x - UNIT_SIZE, head.y, curr_dir)):
                 return True
         if dir == direction.DOWN:
-            if head.x + UNIT_SIZE > 400 or check_body_will_collide(SnakeBody(head.x + UNIT_SIZE, head.y, curr_dir)):
+            if head.x + UNIT_SIZE >= 400 or check_body_will_collide(SnakeBody(head.x + UNIT_SIZE, head.y, curr_dir)):
                 return True
         if dir == direction.RIGHT:
-            if head.y + UNIT_SIZE >= 400 or check_body_will_collide(SnakeBody(head.x, head.y + UNIT_SIZE, curr_dir)):
+            if head.y - UNIT_SIZE < 0 or check_body_will_collide(SnakeBody(head.x, head.y - UNIT_SIZE, curr_dir)):
                 return True
         if dir == direction.LEFT:
-            if head.y - UNIT_SIZE <= 0 or check_body_will_collide(SnakeBody(head.x, head.y - UNIT_SIZE, curr_dir)):
+            if head.y + UNIT_SIZE >= 400 or check_body_will_collide(SnakeBody(head.x, head.y + UNIT_SIZE, curr_dir)):
                 return True
         return False
     elif danger_dir == direction.RIGHT: #right
@@ -143,6 +145,7 @@ def check_will_collide(dir, danger_dir):
         return False
 
 def get_state():
+    global curr_dir
     head = snake_body[0]
     
     state = [
@@ -160,12 +163,15 @@ def get_state():
         curr_dir == direction.RIGHT,
         curr_dir == direction.UP,
         curr_dir == direction.DOWN,
- 
+        
         # food relative to head
         food_position[0] < head.x,
         food_position[0] > head.x,
         food_position[1] < head.y,
-        food_position[1] > head.y
+        food_position[1] > head.y,
+        
+        np.sqrt((head.x - food_position[0])**2 + (head.y - food_position[1])**2)
+        
     ]
     
     return np.array(state, dtype=int)
@@ -175,11 +181,13 @@ class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, output_size)
+        self.linear2 = nn.Linear(hidden_size, hidden_size//2)
+        self.linear3 = nn.Linear(hidden_size//2, output_size)
  
     def forward(self, x):
         x = F.relu(self.linear1(x))
         x = self.linear2(x)
+        x = self.linear3(x)
         return x
  
     def save(self, file_name='model_name.pth'):
@@ -233,12 +241,12 @@ class QTrainer:
  
         self.optimer.step()
 
-model = Linear_QNet(11, 256, 3)
+model = Linear_QNet(12, 256, 3)
 trainer = QTrainer(model, lr = 0.001, gamma = 0.9)
 
 def get_action(state):
     # random moves: tradeoff explotation / exploitation
-    epsilon = 80 - n_game
+    epsilon = 100 - n_game
     final_move = [0, 0, 0]
     if(random.randint(0, 200) < epsilon):
         move = random.randint(0, 2)
@@ -254,6 +262,7 @@ def remember(state,action,reward,next_state,done):
     memory.append((state,action,reward,next_state,done)) # popleft if memory exceed
 
 def train_long_memory():
+
     if (len(memory) > BATCH_SIZE):
         mini_sample = random.sample(memory,BATCH_SIZE)
     else:
@@ -276,35 +285,32 @@ def capture_food():
         elif snake_body[len(snake_body) - 1].direction == direction.DOWN:
             snake_body.append(SnakeBody(*[snake_body[len(snake_body)-1].x, snake_body[len(snake_body)-1].y - UNIT_SIZE, direction.DOWN]))
         food_position = np.array([np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20])
-        reward += 10
+        reward += 30
 
 # if snake is out of bounds
 def check_window_collision():
-    global done, reward
+    global done, reward, msg
     if snake_body[0].x < 0 or snake_body[0].x >= 400 or snake_body[0].y < 0 or snake_body[0].y >= 400:
         done = True
+        msg = "window!"
         reward -= 10
 
 def check_body_collision():
-    global done, reward
+    global done, reward, msg
     for i in range(1, len(snake_body)):
         if snake_body[i].x == snake_body[0].x and snake_body[i].y == snake_body[0].y:
             done = True
+            msg = "body!"
             reward -= 10
+            
+def move_snake(move):
+    global max_score, msg
 
-# game loop
-while running:
-    reward = 0
-    
-    state_old = get_state()
-    move = get_action(state_old)
-    
     if move[0] == 1: curr_dir = direction.UP
     elif move[1] == 1: curr_dir = direction.RIGHT
-    elif move[2] == 1: curr_dir = direction.RIGHT
+    elif move[2] == 1: curr_dir = direction.LEFT
         
     for i in range(len(snake_body)):
-        
         if i == 0: snake_body[i].direction = curr_dir
         if snake_body[i].direction == direction.UP:
             pygame.draw.rect(screen, BLACK, pygame.Rect(snake_body[i].x, snake_body[i].y, UNIT_SIZE, UNIT_SIZE))
@@ -325,29 +331,44 @@ while running:
             pygame.draw.rect(screen, BLACK, pygame.Rect(snake_body[i].x, snake_body[i].y, UNIT_SIZE, UNIT_SIZE))
             snake_body[i].x -= UNIT_SIZE 
             pygame.draw.rect(screen, GREEN, pygame.Rect(snake_body[i].x, snake_body[i].y, UNIT_SIZE, UNIT_SIZE))    
+    
+    for i in range(len(snake_body)):
+        if i != 0: snake_body[len(snake_body) - i].direction = snake_body[len(snake_body) - i - 1].direction
+
     pygame.draw.rect(screen, WHITE, score_rect)
-    score = myfont.render("Score: {0}".format(len(snake_body) - 3), 1, BLACK)
+    max_score = max(max_score, len(snake_body)-3)
+    score = myfont.render("Max Score: {0}".format(max_score), 1, BLACK)
+    count = myfont.render("Game #: {0}".format(n_game), 1, BLACK)
+    msg_screen = myfont.render(msg, 1, BLACK)
     screen.blit(score, (10, 400))
+    screen.blit(count, (10, 415))
+    screen.blit(msg_screen, (200, 400))
     pygame.draw.rect(screen, RED, pygame.Rect(food_position[0], food_position[1], UNIT_SIZE, UNIT_SIZE))
     
     pygame.display.update()
         
-    for i in range(len(snake_body)):
-        if i != 0: snake_body[len(snake_body) - i].direction = snake_body[len(snake_body) - i - 1].direction
+# game loop
+while running:
+    reward = 0
+    
+    state_old = get_state()
+    move = get_action(state_old)
+    
+    move_snake(move)
+        
+    state_new = get_state()
     
     capture_food()
     check_window_collision()
     check_body_collision()
     
-    print(f"Reward: {reward}")
-    
-    state_new = get_state()
     train_short_memory(state_old, move, reward, state_new, done)
     remember(state_old, move, reward, state_new, done)
-
+    
+    print(state_new)
     if done:
         n_game += 1
         train_long_memory()
         reset()
-        
-    clock.tick(40)
+    
+    clock.tick(100)
