@@ -27,7 +27,7 @@ class SnakeBody:
         
         
 SCREEN_SIZE :tuple = (400, 435)
-UNIT_SIZE :int = 20
+UNIT_SIZE :int = 10
 STARTING_POINT :int = 200
 
 # colors
@@ -164,14 +164,17 @@ def get_state():
         curr_dir == direction.UP,
         curr_dir == direction.DOWN,
         
+        # direction you can't go when curr dir is opposite
+        curr_dir == direction.RIGHT,
+        curr_dir == direction.LEFT,
+        curr_dir == direction.DOWN,
+        curr_dir == direction.UP,
+        
         # food relative to head
         food_position[0] < head.x,
         food_position[0] > head.x,
         food_position[1] < head.y,
-        food_position[1] > head.y,
-        
-        np.sqrt((head.x - food_position[0])**2 + (head.y - food_position[1])**2)
-        
+        food_position[1] > head.y,        
     ]
     
     return np.array(state, dtype=int)
@@ -181,13 +184,11 @@ class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, hidden_size//2)
-        self.linear3 = nn.Linear(hidden_size//2, output_size)
+        self.linear2 = nn.Linear(hidden_size, output_size)
  
     def forward(self, x):
         x = F.relu(self.linear1(x))
         x = self.linear2(x)
-        x = self.linear3(x)
         return x
  
     def save(self, file_name='model_name.pth'):
@@ -241,15 +242,15 @@ class QTrainer:
  
         self.optimer.step()
 
-model = Linear_QNet(12, 256, 3)
+model = Linear_QNet(15, 256, 4)
 trainer = QTrainer(model, lr = 0.001, gamma = 0.9)
 
 def get_action(state):
     # random moves: tradeoff explotation / exploitation
-    epsilon = 100 - n_game
-    final_move = [0, 0, 0]
+    epsilon = 80 - n_game
+    final_move = [0, 0, 0, 0]
     if(random.randint(0, 200) < epsilon):
-        move = random.randint(0, 2)
+        move = random.randint(0, 3)
         final_move[move] = 1
     else:
         state0 = torch.tensor(state, dtype=torch.float)
@@ -285,7 +286,7 @@ def capture_food():
         elif snake_body[len(snake_body) - 1].direction == direction.DOWN:
             snake_body.append(SnakeBody(*[snake_body[len(snake_body)-1].x, snake_body[len(snake_body)-1].y - UNIT_SIZE, direction.DOWN]))
         food_position = np.array([np.random.randint(0, 19) * 20, np.random.randint(0, 19) * 20])
-        reward += 30
+        reward += 40
 
 # if snake is out of bounds
 def check_window_collision():
@@ -293,7 +294,7 @@ def check_window_collision():
     if snake_body[0].x < 0 or snake_body[0].x >= 400 or snake_body[0].y < 0 or snake_body[0].y >= 400:
         done = True
         msg = "window!"
-        reward -= 10
+        reward -= 50
 
 def check_body_collision():
     global done, reward, msg
@@ -301,14 +302,15 @@ def check_body_collision():
         if snake_body[i].x == snake_body[0].x and snake_body[i].y == snake_body[0].y:
             done = True
             msg = "body!"
-            reward -= 10
-            
+            reward -= 50
+
 def move_snake(move):
     global max_score, msg
 
     if move[0] == 1: curr_dir = direction.UP
     elif move[1] == 1: curr_dir = direction.RIGHT
     elif move[2] == 1: curr_dir = direction.LEFT
+    elif move[3] == 1: curr_dir = direction.DOWN
         
     for i in range(len(snake_body)):
         if i == 0: snake_body[i].direction = curr_dir
@@ -371,4 +373,4 @@ while running:
         train_long_memory()
         reset()
     
-    clock.tick(100)
+    clock.tick(40)
