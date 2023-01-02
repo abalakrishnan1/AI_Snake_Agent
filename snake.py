@@ -17,7 +17,6 @@ class direction(Enum):
     LEFT :int = 3
     RIGHT :int = 4
 
-
 class SnakeBody:
     dir = direction.UP
     def __init__(self, x, y, direction):
